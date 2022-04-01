@@ -6,17 +6,19 @@ public class LinkedHelloWorld {
 
     public static void main(String[] args) throws Throwable {
 
-        var filename = "C:/Users/janek/Downloads/ffm-test/c-target/HelloWorld";
+        var filename = "/mnt/c/Users/Janekdererste/Projects/ffm-test/c-target/HelloWorld.so";
         System.load(filename);
 
         SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
-        NativeSymbol nativeMain = loaderLookup.lookup("main").orElseThrow();
+        NativeSymbol nativeHello = loaderLookup.lookup("hello").orElseThrow();
 
         CLinker linker = CLinker.systemCLinker();
         MethodHandle handle = linker.downcallHandle(
-                linker.lookup("hello").orElseThrow(),
+                nativeHello,
                 FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT)
         );
-        handle.invoke();
+
+        for (int i = 0; i < 10; i++)
+            handle.invoke(i);
     }
 }
