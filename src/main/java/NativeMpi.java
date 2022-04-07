@@ -4,7 +4,7 @@ import java.lang.invoke.MethodHandle;
 
 public class NativeMpi {
 
-    private final SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
+    private static final SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
 
     private boolean isInitialized = false;
     MemoryAddress commPointer;
@@ -112,20 +112,63 @@ public class NativeMpi {
         }
     }
 
-    public void send() {
+    /**
+     * Very limited so far, but okay for showcase I guess
+     * @param message an int message for other mpi processes
+     */
+    public void send(int message, int destination) {
 
+        try (var scope = ResourceScope.newConfinedScope()) {
+
+            var sendSymbol = loaderLookup.lookup("MPI_Send").orElseThrow();
+            var sendHandle = CLinker.systemCLinker().downcallHandle(
+                    sendSymbol, FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT, // return value
+                            ValueLayout.ADDRESS, // message pointer
+                            ValueLayout.JAVA_INT, // count
+                            ValueLayout.ADDRESS, // Datype pointer
+                            ValueLayout.JAVA_INT, // destination
+                            ValueLayout.JAVA_INT, // message tag
+                            ValueLayout.ADDRESS // Comm pointer
+                    )
+            );
+
+            // write the message to off heap memory
+            var messagePointer = MemorySegment.allocateNative(ValueLayout.JAVA_INT, scope);
+            messagePointer.setAtIndex(ValueLayout.JAVA_INT, 0, message);
+
+            // call send
+            sendHandle.invoke(messagePointer, 1, Datatype.getIntDatatype(), destination, 1, this.commPointer);
+        } catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
+        }
     }
 
-    public void receive() {
+    public int receive(int source) {
 
-     /*   var nativeSend = loaderLookup.lookup("MPI_send").orElseThrow();
-        var nativeSendHandle = CLinker.systemCLinker().downcallHandle(
-                nativeSend, FunctionDescriptor.of(
-                        ValueLayout.JAVA_INT,
-                        ValueLayout.ADDRESS, ValueLayout.JAVA_INT,
-                )
-        )
+        try (var scope = ResourceScope.newConfinedScope()) {
 
-      */
+            var receiveSymbol = loaderLookup.lookup("MPI_Recv").orElseThrow();
+            var receiveHandle = CLinker.systemCLinker().downcallHandle(
+                    receiveSymbol, FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT, // return value
+                            ValueLayout.ADDRESS, // message pointer
+                            ValueLayout.JAVA_INT, // count
+                            ValueLayout.ADDRESS, // Datype pointer
+                            ValueLayout.JAVA_INT, // source
+                            ValueLayout.JAVA_INT, // message tag
+                            ValueLayout.ADDRESS // Comm pointer
+                    )
+            );
+
+            var messagePointer = MemorySegment.allocateNative(ValueLayout.JAVA_INT, scope);
+
+            // call receive - this is a blocking call and will wait until there is anything to receive
+            receiveHandle.invoke(messagePointer, 1, Datatype.getIntDatatype(), source, 1, this.commPointer);
+            return messagePointer.get(ValueLayout.JAVA_INT, 0);
+
+        } catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
+        }
     }
 }

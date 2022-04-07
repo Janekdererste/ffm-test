@@ -1,5 +1,9 @@
 .idea
 *.iml
+*.log
+*.jar
+*.i
 
 /target
 /c-target
+/CMakeFiles
