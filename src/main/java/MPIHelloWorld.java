@@ -9,9 +9,11 @@ public class MPIHelloWorld {
 
         var mpi = new NativeMpi(libMpiArg.getPath());
         mpi.mpiInit(new String[0]);
-        System.out.println("Hello Word from inbetween MPI_Init and MPI_Finalize!");
 
-        //mpi.getRank();
+        var rank = mpi.getRank();
+        var size = mpi.getSize();
+
+        System.out.println("Rank: " + rank + ", Size: " + size);
         mpi.mpiFinalize();
     }
 }
