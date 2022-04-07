@@ -4,15 +4,16 @@ import java.lang.invoke.MethodHandle;
 
 public class NativeMpi {
 
-    // link the mpi library from wsl
-    static {
-        var filename = "/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so";
-        System.load(filename);
-    }
-
     private final SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
 
+    public NativeMpi(String libraryPath) {
+        // this links the mpi library
+        System.out.println("Loading library path: " + libraryPath);
+        System.load(libraryPath);
+    }
+
     public void mpiInit(String[] args) {
+        System.out.println("Call to MPI_Init");
         NativeSymbol nativeMpiInit = loaderLookup.lookup("MPI_Init").orElseThrow();
 
         MethodHandle mpiInit = CLinker.systemCLinker().downcallHandle(
@@ -64,5 +65,38 @@ public class NativeMpi {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void getRank() {
+
+        var nativeMpiCommWorld = loaderLookup.lookup("MPI_COMM_WORLD").orElseThrow();
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                nativeMpiCommWorld, FunctionDescriptor.of(ValueLayout.ADDRESS)
+        );
+
+        try {
+
+            var result = handle.invoke();
+            System.out.println(result);
+        } catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
+        }
+    }
+
+    public void send() {
+
+    }
+
+    public void receive() {
+
+     /*   var nativeSend = loaderLookup.lookup("MPI_send").orElseThrow();
+        var nativeSendHandle = CLinker.systemCLinker().downcallHandle(
+                nativeSend, FunctionDescriptor.of(
+                        ValueLayout.JAVA_INT,
+                        ValueLayout.ADDRESS, ValueLayout.JAVA_INT,
+                )
+        )
+
+      */
     }
 }
