@@ -1,0 +1,1 @@
+ mpirun -np 2 $HOME/jdk-18/bin/java --add-modules jdk.incubator.foreign --enable-native-access ALL-UNNAMED -cp ffm-test-1.0-SNAPSHOT.jar MPIHelloWorld -libmpi /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
