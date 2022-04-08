@@ -9,12 +9,8 @@ include_directories(src/main/c
         /usr/lib/x86_64-linux-gnu/openmpi/include
         /usr/lib/x86_64-linux-gnu/openmpi/lib)
 
-
-
 add_executable(hellompi
-        src/main/c/HelloWorld.c
-        src/main/c/HelloWorld.h
-        src/main/c/TestHelloWorld.c src/main/c/Hello_MPI.c)
+        src/main/c/Hello_MPI.c)
 
 add_executable(ringmpi
         src/main/c/Ring.c)
